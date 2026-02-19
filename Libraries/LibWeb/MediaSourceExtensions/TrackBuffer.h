@@ -15,15 +15,15 @@ public:
         bool   is_keyframe;
         ByteBuffer encoded_data; // still-encoded frame bytes
         // OR, after decode:
-        RefPtr<LibGfx::Bitmap> decoded_video;
+        RefPtr<Gfx::Bitmap> decoded_video;
         Vector<float> decoded_audio_samples;
     };
 
     void insert_coded_frame(Frame);
     void remove_frames_in_range(double start, double end);
 
-    Optional<Frame> get_frame_at(double presentation_time);
-    GC::RefPtr<HTML::TimeRanges> compute_buffered_ranges() const;
+    Frame const* get_frame_at(double presentation_time);
+    JS::NonnullGCPtr<HTML::TimeRanges> compute_buffered_ranges() const;
 
     // Called when SourceBuffer.abort() is invoked
     void reset_parser_state();

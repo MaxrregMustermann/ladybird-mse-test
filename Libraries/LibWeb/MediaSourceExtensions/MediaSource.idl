@@ -1,5 +1,6 @@
 #import <DOM/EventTarget.idl>
 #import <DOM/EventHandler.idl>
+#import <MediaSourceExtensions/MediaSourceHandle.idl>
 #import <MediaSourceExtensions/SourceBuffer.idl>
 #import <MediaSourceExtensions/SourceBufferList.idl>
 
@@ -10,6 +11,8 @@ interface MediaSource : EventTarget {
     readonly attribute SourceBufferList sourceBuffers;
     readonly attribute SourceBufferList activeSourceBuffers;
     readonly attribute ReadyState readyState;
+    [Exposed=DedicatedWorker] readonly attribute MediaSourceHandle handle;
+    static readonly attribute boolean canConstructInDedicatedWorker;
 
     attribute unrestricted double duration;
 

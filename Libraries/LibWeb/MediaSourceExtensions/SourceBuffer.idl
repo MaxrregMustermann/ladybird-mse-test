@@ -1,7 +1,9 @@
 #import <DOM/EventHandler.idl>
 #import <DOM/EventTarget.idl>
 #import <HTML/TimeRanges.idl>
-#import <HTML/TrackTypes.idl>
+#import <HTML/AudioTrackList.idl>
+#import <HTML/VideoTrackList.idl>
+#import <HTML/TextTrackList.idl>
 
 [Exposed=(Window,DedicatedWorker)]
 interface SourceBuffer : EventTarget {

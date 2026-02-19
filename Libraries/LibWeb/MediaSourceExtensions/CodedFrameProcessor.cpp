@@ -21,16 +21,14 @@ void CodedFrameProcessor::process(TrackBuffer& track_buffer, SegmentParser::Code
     double decode_timestamp = frame.decode_timestamp + m_source_buffer.timestamp_offset();
 
     // 3. If the presentation timestamp or the decode timestamp is less than the append window start,
-    //    then run the end of stream algorithm with the error parameter set to "decode", and abort these steps.
+    //    then silently drop the frame and abort these steps.
     if (presentation_timestamp < m_source_buffer.append_window_start() || decode_timestamp < m_source_buffer.append_window_start()) {
-        // FIXME: Run end of stream algorithm with "decode" error.
         return;
     }
 
-    // 4. If the presentation timestamp is greater than or equal to the append window end, then run the
-    //    end of stream algorithm with the error parameter set to "decode", and abort these steps.
+    // 4. If the presentation timestamp is greater than or equal to the append window end, then
+    //    silently drop the frame and abort these steps.
     if (presentation_timestamp >= m_source_buffer.append_window_end()) {
-        // FIXME: Run end of stream algorithm with "decode" error.
         return;
     }
 

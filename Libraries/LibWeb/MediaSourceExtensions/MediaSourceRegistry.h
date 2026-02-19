@@ -18,7 +18,7 @@ public:
 
 private:
     MediaSourceRegistry() = default;
-    HashMap<String, JS::GCPtr<MediaSource>> m_registry;
+    HashMap<String, JS::Handle<MediaSource>> m_registry;
 };
 
 }

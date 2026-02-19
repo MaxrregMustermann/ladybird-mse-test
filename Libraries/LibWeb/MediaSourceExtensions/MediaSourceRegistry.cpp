@@ -4,15 +4,13 @@ namespace Web::MediaSourceExtensions {
 
 MediaSourceRegistry& MediaSourceRegistry::the()
 {
-    static MediaSourceRegistry* s_the = nullptr;
-    if (!s_the)
-        s_the = new MediaSourceRegistry;
-    return *s_the;
+    static MediaSourceRegistry instance;
+    return instance;
 }
 
 void MediaSourceRegistry::register_url(String const& url, JS::GCPtr<MediaSource> media_source)
 {
-    m_registry.set(url, media_source);
+    m_registry.set(url, JS::make_handle(*media_source));
 }
 
 void MediaSourceRegistry::unregister_url(String const& url)
@@ -22,7 +20,10 @@ void MediaSourceRegistry::unregister_url(String const& url)
 
 JS::GCPtr<MediaSource> MediaSourceRegistry::for_url(String const& url) const
 {
-    return m_registry.get(url).value_or(nullptr);
+    auto handle = m_registry.get(url);
+    if (handle.has_value())
+        return handle.value()->cell();
+    return nullptr;
 }
 
 }
