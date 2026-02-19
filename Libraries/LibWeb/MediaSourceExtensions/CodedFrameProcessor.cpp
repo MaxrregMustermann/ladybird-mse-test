@@ -23,6 +23,7 @@ void CodedFrameProcessor::process(TrackBuffer& track_buffer, SegmentParser::Code
     // 3. If the presentation timestamp or the decode timestamp is less than the append window start,
     //    then silently drop the frame and abort these steps.
     if (presentation_timestamp < m_source_buffer.append_window_start() || decode_timestamp < m_source_buffer.append_window_start()) {
+        m_need_random_access_point = true;
         return;
     }
 

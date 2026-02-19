@@ -43,7 +43,7 @@ protected:
     virtual void visit_edges(Cell::Visitor&) override;
 
 private:
-    MediaSource(JS::Realm&);
+    MediaSource(JS::Realm&, JS::NonnullGCPtr<SourceBufferList>, JS::NonnullGCPtr<SourceBufferList>);
 
     ReadyState m_ready_state { ReadyState::Closed };
     JS::NonnullGCPtr<SourceBufferList> m_source_buffers;

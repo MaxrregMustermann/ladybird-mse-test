@@ -23,7 +23,7 @@ public:
     void remove_frames_in_range(double start, double end);
 
     Frame const* get_frame_at(double presentation_time);
-    JS::NonnullGCPtr<HTML::TimeRanges> compute_buffered_ranges() const;
+    JS::NonnullGCPtr<HTML::TimeRanges> compute_buffered_ranges(JS::Realm&) const;
 
     // Called when SourceBuffer.abort() is invoked
     void reset_parser_state();

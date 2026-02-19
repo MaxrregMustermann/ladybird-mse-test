@@ -1,6 +1,9 @@
 #pragma once
 
+#include <AK/FlyString.h>
+#include <LibWeb/Bindings/MediaSourceExtensionsEnums.h>
 #include <LibWeb/DOM/EventTarget.h>
+#include <cmath>
 
 // FIXME: These are not the final locations.
 #include <LibWeb/MediaSourceExtensions/TrackBuffer.h>

@@ -8,7 +8,7 @@ MediaSourceRegistry& MediaSourceRegistry::the()
     return instance;
 }
 
-void MediaSourceRegistry::register_url(String const& url, JS::GCPtr<MediaSource> media_source)
+void MediaSourceRegistry::register_url(String const& url, JS::NonnullGCPtr<MediaSource> media_source)
 {
     m_registry.set(url, JS::make_handle(*media_source));
 }

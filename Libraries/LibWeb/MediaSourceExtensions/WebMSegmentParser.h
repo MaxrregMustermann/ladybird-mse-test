@@ -4,13 +4,14 @@
 
 namespace Web::MediaSourceExtensions {
 
-class MP4SegmentParser final : public FFmpegSegmentParser {
+class WebMSegmentParser final : public FFmpegSegmentParser {
 public:
-    MP4SegmentParser();
-    virtual ~MP4SegmentParser() override;
+    WebMSegmentParser();
+    virtual ~WebMSegmentParser() override;
 
 protected:
     virtual ErrorOr<void> open_format_context() override;
+    virtual ErrorOr<Vector<ParsedSegment>> parse_frames() override;
 };
 
 }

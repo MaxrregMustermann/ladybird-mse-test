@@ -12,7 +12,7 @@ class MediaSourceRegistry {
 public:
     static MediaSourceRegistry& the();
 
-    void register_url(String const&, JS::GCPtr<MediaSource>);
+    void register_url(String const&, JS::NonnullGCPtr<MediaSource>);
     void unregister_url(String const&);
     JS::GCPtr<MediaSource> for_url(String const&) const;
 
