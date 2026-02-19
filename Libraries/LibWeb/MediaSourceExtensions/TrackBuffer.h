@@ -32,6 +32,8 @@ public:
     void evict_coded_frames(double current_playback_time, size_t needed_bytes);
 
 private:
+    void rebuild_keyframe_index();
+
     // Sorted by PTS
     Vector<Frame> m_frames;
     // Random access point index (keyframes) for seeking

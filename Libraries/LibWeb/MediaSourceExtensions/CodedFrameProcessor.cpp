@@ -33,24 +33,29 @@ void CodedFrameProcessor::process(TrackBuffer& track_buffer, SegmentParser::Code
         return;
     }
 
-    // FIXME: 5. Let frame end timestamp equal the sum of the presentation timestamp and the frame's duration.
+    // 5-7. Random access point handling.
+    if (m_need_random_access_point) {
+        if (!frame.is_key_frame)
+            return;
+        m_need_random_access_point = false;
+    }
 
-    // FIXME: 6. If mode equals "sequence" and the group start timestamp is set, then set the group end timestamp
-    //           to the frame end timestamp.
+    double frame_end_timestamp = presentation_timestamp + frame.duration;
 
-    // FIXME: 7. If the need random access point flag is true, then
-        // FIXME: 7.1. If the frame is not a random access point, then drop the frame and abort these steps.
-        // FIXME: 7.2. Set the need random access point flag to false.
+    // 8. Remove track buffer ranges.
+    track_buffer.remove_frames_in_range(presentation_timestamp, frame_end_timestamp);
 
-    // FIXME: 8. Remove track buffer ranges.
+    // 9. Add the coded frame to the track buffer.
+    TrackBuffer::Frame new_frame;
+    new_frame.pts = presentation_timestamp;
+    new_frame.dts = decode_timestamp;
+    new_frame.duration = frame.duration;
+    new_frame.is_keyframe = frame.is_key_frame;
+    new_frame.encoded_data = frame.data;
+    track_buffer.insert_coded_frame(move(new_frame));
 
-    // FIXME: 9. Add the coded frame to the track buffer.
-
-    // FIXME: 10. If the frame is the last frame in a media segment, ...
-
-    // FIXME: 11. Update the highest presentation timestamp.
-
-    // FIXME: 12. If the track buffer is full, ...
+    // FIXME: Implement remaining steps (10-12) of the algorithm,
+    // which involve updating MediaSource duration and handling buffer full states.
 }
 
 }
