@@ -37,6 +37,20 @@ MP4SegmentParser::~MP4SegmentParser()
 
 ErrorOr<Vector<SegmentParser::ParsedSegment>> MP4SegmentParser::append(ReadonlyBytes data)
 {
+    // If we have a read offset, it means some data has been consumed by FFmpeg.
+    // To avoid the buffer growing indefinitely, we can slide the unread data to the beginning.
+    if (m_read_offset > 0) {
+        // If the entire buffer has been read, we can just clear it.
+        if (m_read_offset >= m_buffer.size()) {
+            m_buffer.clear();
+        } else {
+            // Otherwise, copy the remaining bytes to the start of the buffer.
+            m_buffer.span().slice(m_read_offset).copy_to(m_buffer.span());
+            m_buffer.resize(m_buffer.size() - m_read_offset);
+        }
+        m_read_offset = 0;
+    }
+
     m_buffer.append(data);
 
     if (!m_initialized) {
@@ -154,6 +168,7 @@ void MP4SegmentParser::reset()
 
     m_initialized = false;
     m_buffer.clear();
+    m_read_offset = 0;
 
     // Re-initialize contexts for the next use.
     m_format_context = avformat_alloc_context();
@@ -179,14 +194,13 @@ void MP4SegmentParser::reset()
 int MP4SegmentParser::avio_read_packet(void* opaque, uint8_t* buf, int buf_size)
 {
     auto& parser = *static_cast<MP4SegmentParser*>(opaque);
-    auto to_read = min((size_t)buf_size, parser.m_buffer.size());
+    auto remaining_bytes = parser.m_buffer.size() - parser.m_read_offset;
+    auto to_read = min((size_t)buf_size, remaining_bytes);
     if (to_read == 0)
         return AVERROR_EOF;
 
-    memcpy(buf, parser.m_buffer.data(), to_read);
-    // FIXME: This is inefficient. We should use a circular buffer or a different approach
-    // to avoid creating a new ByteBuffer on every read.
-    parser.m_buffer = parser.m_buffer.slice(to_read);
+    memcpy(buf, parser.m_buffer.data() + parser.m_read_offset, to_read);
+    parser.m_read_offset += to_read;
     return to_read;
 }
 

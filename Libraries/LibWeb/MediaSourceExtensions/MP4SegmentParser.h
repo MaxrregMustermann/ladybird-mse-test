@@ -23,6 +23,7 @@ private:
     AVFormatContext* m_format_context { nullptr };
     AVIOContext* m_avio_context { nullptr };
     ByteBuffer m_buffer;
+    size_t m_read_offset { 0 };
     bool m_initialized { false };
 };
 
