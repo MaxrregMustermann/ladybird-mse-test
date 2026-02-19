@@ -1,44 +1,63 @@
-/*
- * Copyright (c) 2024, Jelle Raaijmakers <jelle@ladybird.org>
- *
- * SPDX-License-Identifier: BSD-2-Clause
- */
-
 #pragma once
-
 #include <LibWeb/DOM/EventTarget.h>
+#include <LibWeb/MediaSourceExtensions/TrackBuffer.h>
+#include <LibWeb/MediaSourceExtensions/SegmentParser.h>
 
 namespace Web::MediaSourceExtensions {
 
-// https://w3c.github.io/media-source/#dom-sourcebuffer
-class SourceBuffer : public DOM::EventTarget {
+class SourceBuffer final : public DOM::EventTarget {
     WEB_PLATFORM_OBJECT(SourceBuffer, DOM::EventTarget);
-    GC_DECLARE_ALLOCATOR(SourceBuffer);
 
 public:
-    void set_onupdatestart(GC::Ptr<WebIDL::CallbackType>);
-    GC::Ptr<WebIDL::CallbackType> onupdatestart();
+    // Core state
+    bool updating() const { return m_updating; }
+    GC::Ref<HTML::TimeRanges> buffered() const;
 
-    void set_onupdate(GC::Ptr<WebIDL::CallbackType>);
-    GC::Ptr<WebIDL::CallbackType> onupdate();
+    Bindings::AppendMode mode() const { return m_mode; }
+    WebIDL::ExceptionOr<void> set_mode(Bindings::AppendMode);
 
-    void set_onupdateend(GC::Ptr<WebIDL::CallbackType>);
-    GC::Ptr<WebIDL::CallbackType> onupdateend();
+    double timestamp_offset() const { return m_timestamp_offset; }
+    WebIDL::ExceptionOr<void> set_timestamp_offset(double);
 
-    void set_onerror(GC::Ptr<WebIDL::CallbackType>);
-    GC::Ptr<WebIDL::CallbackType> onerror();
+    double append_window_start() const { return m_append_window_start; }
+    double append_window_end() const { return m_append_window_end; }
+    WebIDL::ExceptionOr<void> set_append_window_start(double);
+    WebIDL::ExceptionOr<void> set_append_window_end(double);
 
-    void set_onabort(GC::Ptr<WebIDL::CallbackType>);
-    GC::Ptr<WebIDL::CallbackType> onabort();
+    // JS-exposed methods
+    WebIDL::ExceptionOr<void> append_buffer(GC::Root<WebIDL::BufferSource>);
+    WebIDL::ExceptionOr<void> abort();
+    WebIDL::ExceptionOr<void> remove(double start, double end);
+    WebIDL::ExceptionOr<void> change_type(String const& type);
 
-protected:
-    SourceBuffer(JS::Realm&);
-
-    virtual ~SourceBuffer() override;
-
-    virtual void initialize(JS::Realm&) override;
+    // Internal: called by the decode pipeline
+    Optional<TrackBuffer::Frame> get_next_video_frame(double current_time);
+    Optional<TrackBuffer::AudioSamples> get_next_audio_samples(double current_time);
 
 private:
+    SourceBuffer(JS::Realm&, MediaSource&, String mime_type);
+
+    MediaSource& m_parent_media_source;
+    String m_mime_type;
+    Bindings::AppendMode m_mode { Bindings::AppendMode::Segments };
+
+    bool m_updating { false };
+    double m_timestamp_offset { 0.0 };
+    double m_append_window_start { 0.0 };
+    double m_append_window_end { INFINITY };
+
+    // The heart of the SourceBuffer
+    OwnPtr<SegmentParser> m_segment_parser;
+    OwnPtr<TrackBuffer> m_video_track_buffer;
+    OwnPtr<TrackBuffer> m_audio_track_buffer;
+
+    // Internal algorithm runners
+    void run_append_buffer_algorithm(ByteBuffer data);
+    void run_coded_frame_processing_algorithm(SegmentParser::ParsedSegment const&);
+    void run_buffer_eviction_algorithm();
+
+    void set_updating(bool);
+    void queue_task_to_fire_event(FlyString const& event_name);
 };
 
-}
+} // namespace Web::MediaSourceExtensions
