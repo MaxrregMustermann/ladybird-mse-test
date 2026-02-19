@@ -33,6 +33,10 @@ enum class MediaSeekMode {
 
 class SourceElementSelector;
 
+namespace MediaSourceExtensions {
+class MediaSource;
+}
+
 class HTMLMediaElement : public HTMLElement {
     WEB_PLATFORM_OBJECT(HTMLMediaElement, HTMLElement);
 
@@ -282,6 +286,9 @@ private:
 
     // https://html.spec.whatwg.org/multipage/media.html#dom-media-currentsrc
     String m_current_src;
+
+    // https://html.spec.whatwg.org/multipage/media.html#assigned-media-provider-object
+    JS::GCPtr<MediaSourceExtensions::MediaSource> m_attached_media_source;
 
     // https://html.spec.whatwg.org/multipage/media.html#dom-media-networkstate
     NetworkState m_network_state { NetworkState::Empty };

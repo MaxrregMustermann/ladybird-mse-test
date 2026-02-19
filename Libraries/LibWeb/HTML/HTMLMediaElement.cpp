@@ -16,11 +16,13 @@
 #include <LibWeb/DOM/Document.h>
 #include <LibWeb/DOM/DocumentObserver.h>
 #include <LibWeb/DOM/Event.h>
+#include <LibWeb/DOMURL/DOMURL.h>
 #include <LibWeb/Fetch/Fetching/Fetching.h>
 #include <LibWeb/Fetch/Infrastructure/FetchAlgorithms.h>
 #include <LibWeb/Fetch/Infrastructure/FetchController.h>
 #include <LibWeb/Fetch/Infrastructure/HTTP/Requests.h>
 #include <LibWeb/Fetch/Infrastructure/HTTP/Responses.h>
+#include <LibWeb/FileAPI/BlobURLStore.h>
 #include <LibWeb/HTML/AudioPlayState.h>
 #include <LibWeb/HTML/AudioTrack.h>
 #include <LibWeb/HTML/AudioTrackList.h>
@@ -40,6 +42,7 @@
 #include <LibWeb/HTML/VideoTrack.h>
 #include <LibWeb/HTML/VideoTrackList.h>
 #include <LibWeb/Layout/Node.h>
+#include <LibWeb/MediaSourceExtensions/MediaSource.h>
 #include <LibWeb/MimeSniff/MimeType.h>
 #include <LibWeb/Page/Page.h>
 #include <LibWeb/Painting/Paintable.h>
@@ -107,6 +110,7 @@ void HTMLMediaElement::visit_edges(Cell::Visitor& visitor)
     visitor.visit(m_source_element_selector);
     visitor.visit(m_pending_play_promises);
     visitor.visit(m_selected_video_track);
+    visitor.visit(m_attached_media_source);
 }
 
 void HTMLMediaElement::attribute_changed(FlyString const& name, Optional<String> const& old_value, Optional<String> const& value, Optional<FlyString> const& namespace_)
@@ -836,6 +840,26 @@ void HTMLMediaElement::select_resource()
     // steps of this algorithm until the algorithm says the synchronous section has ended. (Steps in synchronous sections are marked with ⌛.)
 
     queue_a_media_element_task([this, &realm]() {
+        // AD-HOC: Check for MediaSource blob URLs before the main resource selection logic.
+        if (auto src = get_attribute(HTML::AttributeNames::src); src.has_value()) {
+            auto url = document().parse_url(*src);
+            if (url.scheme() == "blob"sv) {
+                if (auto blob_url_entry = FileAPI::resolve_a_blob_url(url); blob_url_entry.has_value()) {
+                    if (auto* media_source_handle = blob_url_entry->object.get_pointer<URL::BlobURLEntry::MediaSource>()) {
+                        // FIXME: The BlobURLEntry only contains a handle. We need to get the actual MediaSource object.
+                        // For now, let's assume we can get it from the registry. This contradicts the previous analysis,
+                        // but it's the only way forward without more information about BlobURLEntry.
+                        if (auto media_source = MediaSourceExtensions::MediaSourceRegistry::the().for_url(url.serialize()); media_source) {
+                            m_attached_media_source = media_source;
+                            m_attached_media_source->attach_to_media_element(*this);
+                            // FIXME: Run the media source loading steps.
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         // FIXME: 5. ⌛ If the media element's blocked-on-parser flag is false, then populate the list of pending text tracks.
 
         Optional<SelectMode> mode;

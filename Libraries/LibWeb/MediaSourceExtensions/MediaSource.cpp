@@ -1,26 +1,23 @@
-/*
- * Copyright (c) 2024, Jelle Raaijmakers <jelle@ladybird.org>
- *
- * SPDX-License-Identifier: BSD-2-Clause
- */
-
 #include <LibWeb/Bindings/Intrinsics.h>
 #include <LibWeb/Bindings/MediaSourcePrototype.h>
-#include <LibWeb/MediaSourceExtensions/EventNames.h>
 #include <LibWeb/MediaSourceExtensions/MediaSource.h>
-#include <LibWeb/MimeSniff/MimeType.h>
+#include <LibWeb/MediaSourceExtensions/SourceBufferList.h>
 
 namespace Web::MediaSourceExtensions {
 
-GC_DEFINE_ALLOCATOR(MediaSource);
+JS_DEFINE_ALLOCATOR(MediaSource);
 
-WebIDL::ExceptionOr<GC::Ref<MediaSource>> MediaSource::construct_impl(JS::Realm& realm)
+WebIDL::ExceptionOr<JS::NonnullGCPtr<MediaSource>> MediaSource::construct_impl(JS::Realm& realm)
 {
-    return realm.create<MediaSource>(realm);
+    auto source_buffers = TRY(SourceBufferList::construct_impl(realm));
+    auto active_source_buffers = TRY(SourceBufferList::construct_impl(realm));
+    return realm.heap().allocate<MediaSource>(realm, realm, source_buffers, active_source_buffers);
 }
 
-MediaSource::MediaSource(JS::Realm& realm)
+MediaSource::MediaSource(JS::Realm& realm, JS::NonnullGCPtr<SourceBufferList> source_buffers, JS::NonnullGCPtr<SourceBufferList> active_source_buffers)
     : DOM::EventTarget(realm)
+    , m_source_buffers(source_buffers)
+    , m_active_source_buffers(active_source_buffers)
 {
 }
 
@@ -28,68 +25,16 @@ MediaSource::~MediaSource() = default;
 
 void MediaSource::initialize(JS::Realm& realm)
 {
-    WEB_SET_PROTOTYPE_FOR_INTERFACE(MediaSource);
     Base::initialize(realm);
+    set_prototype(&ensure_web_prototype<Bindings::MediaSourcePrototype>(realm, "MediaSource"));
 }
 
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceopen
-void MediaSource::set_onsourceopen(GC::Ptr<WebIDL::CallbackType> event_handler)
+void MediaSource::visit_edges(Cell::Visitor& visitor)
 {
-    set_event_handler_attribute(EventNames::sourceopen, event_handler);
+    Base::visit_edges(visitor);
+    visitor.visit(m_source_buffers);
+    visitor.visit(m_active_source_buffers);
+    visitor.visit(m_attached_element);
 }
 
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceopen
-GC::Ptr<WebIDL::CallbackType> MediaSource::onsourceopen()
-{
-    return event_handler_attribute(EventNames::sourceopen);
-}
-
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceended
-void MediaSource::set_onsourceended(GC::Ptr<WebIDL::CallbackType> event_handler)
-{
-    set_event_handler_attribute(EventNames::sourceended, event_handler);
-}
-
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceended
-GC::Ptr<WebIDL::CallbackType> MediaSource::onsourceended()
-{
-    return event_handler_attribute(EventNames::sourceended);
-}
-
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceclose
-void MediaSource::set_onsourceclose(GC::Ptr<WebIDL::CallbackType> event_handler)
-{
-    set_event_handler_attribute(EventNames::sourceclose, event_handler);
-}
-
-// https://w3c.github.io/media-source/#dom-mediasource-onsourceclose
-GC::Ptr<WebIDL::CallbackType> MediaSource::onsourceclose()
-{
-    return event_handler_attribute(EventNames::sourceclose);
-}
-
-// https://w3c.github.io/media-source/#dom-mediasource-istypesupported
-bool MediaSource::is_type_supported(JS::VM&, String const& type)
-{
-    // 1. If type is an empty string, then return false.
-    if (type.is_empty())
-        return false;
-
-    // 2. If type does not contain a valid MIME type string, then return false.
-    auto mime_type = MimeSniff::MimeType::parse(type);
-    if (!mime_type.has_value())
-        return false;
-
-    // FIXME: 3. If type contains a media type or media subtype that the MediaSource does not support, then
-    //    return false.
-
-    // FIXME: 4. If type contains a codec that the MediaSource does not support, then return false.
-
-    // FIXME: 5. If the MediaSource does not support the specified combination of media type, media
-    //    subtype, and codecs then return false.
-
-    // 6. Return true.
-    return true;
-}
-
-}
+} // namespace Web::MediaSourceExtensions
