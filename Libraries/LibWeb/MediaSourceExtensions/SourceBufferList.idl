@@ -1,4 +1,8 @@
-[Exposed=Window, LegacyUnenumerableNamedProperties]
+#import <DOM/EventHandler.idl>
+#import <DOM/EventTarget.idl>
+#import <MediaSourceExtensions/SourceBuffer.idl>
+
+[Exposed=(Window,DedicatedWorker), LegacyUnenumerableNamedProperties]
 interface SourceBufferList : EventTarget {
     readonly attribute unsigned long length;
     getter SourceBuffer (unsigned long index);

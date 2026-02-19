@@ -1,4 +1,9 @@
-[Exposed=Window]
+#import <DOM/EventHandler.idl>
+#import <DOM/EventTarget.idl>
+#import <HTML/TimeRanges.idl>
+#import <HTML/TrackTypes.idl>
+
+[Exposed=(Window,DedicatedWorker)]
 interface SourceBuffer : EventTarget {
     attribute AppendMode mode;
 

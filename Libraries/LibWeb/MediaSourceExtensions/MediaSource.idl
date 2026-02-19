@@ -1,3 +1,8 @@
+#import <DOM/EventTarget.idl>
+#import <DOM/EventHandler.idl>
+#import <MediaSourceExtensions/SourceBuffer.idl>
+#import <MediaSourceExtensions/SourceBufferList.idl>
+
 [Exposed=(Window,DedicatedWorker)]
 interface MediaSource : EventTarget {
     constructor();
